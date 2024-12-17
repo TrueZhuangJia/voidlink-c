@@ -44,6 +44,8 @@ static void AudioPingThreadProc(void* context) {
     memcpy(&saddr, &RemoteAddr, sizeof(saddr));
     SET_PORT(&saddr, AudioPortNumber);
 
+    PltSetThreadPriority(QOS_CLASS_UTILITY);
+
     // We do not check for errors here. Socket errors will be handled
     // on the read-side in ReceiveThreadProc(). This avoids potential
     // issues related to receiving ICMP port unreachable messages due
@@ -244,6 +246,9 @@ static void AudioReceiveThreadProc(void* context) {
     uint32_t packetsToDrop;
     int waitingForAudioMs;
 
+    // High priority for audio packets
+    PltSetThreadPriority(QOS_CLASS_USER_INITIATED);
+
     packet = NULL;
     packetsToDrop = 500 / AudioPacketDuration;
 
@@ -275,7 +280,7 @@ static void AudioReceiveThreadProc(void* context) {
         }
         else if (packet->header.size == 0) {
             // Receive timed out; try again
-            
+
             if (!receivedDataFromPeer) {
                 waitingForAudioMs += UDP_RECV_POLL_TIMEOUT_MS;
             }
@@ -366,7 +371,7 @@ static void AudioReceiveThreadProc(void* context) {
                         free(queuedPacket);
                     }
                 }
-                
+
                 // Break on exit
                 if (queuedPacket != NULL) {
                     break;
@@ -374,7 +379,7 @@ static void AudioReceiveThreadProc(void* context) {
             }
         }
     }
-    
+
     if (packet != NULL) {
         free(packet);
     }
@@ -383,6 +388,9 @@ static void AudioReceiveThreadProc(void* context) {
 static void AudioDecoderThreadProc(void* context) {
     int err;
     PQUEUED_AUDIO_PACKET packet;
+
+    // Highest priority for audio decoder thread
+    PltSetThreadPriority(QOS_CLASS_USER_INTERACTIVE);
 
     while (!PltIsThreadInterrupted(&decoderThread)) {
         err = LbqWaitForQueueElement(&packetQueue, (void**)&packet);
@@ -405,12 +413,12 @@ void stopAudioStream(void) {
     AudioCallbacks.stop();
 
     PltInterruptThread(&receiveThread);
-    if ((AudioCallbacks.capabilities & CAPABILITY_DIRECT_SUBMIT) == 0) {        
+    if ((AudioCallbacks.capabilities & CAPABILITY_DIRECT_SUBMIT) == 0) {
         // Signal threads waiting on the LBQ
         LbqSignalQueueShutdown(&packetQueue);
         PltInterruptThread(&decoderThread);
     }
-    
+
     PltJoinThread(&receiveThread);
     if ((AudioCallbacks.capabilities & CAPABILITY_DIRECT_SUBMIT) == 0) {
         PltJoinThread(&decoderThread);

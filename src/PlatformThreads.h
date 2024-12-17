@@ -56,12 +56,26 @@ typedef struct _PLT_EVENT {
 } PLT_EVENT;
 #endif
 
+#if defined(LC_DARWIN)
+#include <sys/qos.h>
+
+typedef qos_class_t PLT_THREAD_PRIO;
+#else
+typedef enum {
+  QOS_CLASS_USER_INTERACTIVE = 0x21,
+  QOS_CLASS_USER_INITIATED   = 0x19,
+  QOS_CLASS_UTILITY          = 0x11,
+  QOS_CLASS_BACKGROUND       = 0x09
+} PLT_THREAD_PRIO;
+#endif
+
 int PltCreateMutex(PLT_MUTEX* mutex);
 void PltDeleteMutex(PLT_MUTEX* mutex);
 void PltLockMutex(PLT_MUTEX* mutex);
 void PltUnlockMutex(PLT_MUTEX* mutex);
 
 int PltCreateThread(const char* name, ThreadEntry entry, void* context, PLT_THREAD* thread);
+int PltSetThreadPriority(PLT_THREAD_PRIO prio);
 void PltInterruptThread(PLT_THREAD* thread);
 bool PltIsThreadInterrupted(PLT_THREAD* thread);
 void PltJoinThread(PLT_THREAD* thread);

@@ -883,6 +883,8 @@ static int ignoreDisconnectIntercept(ENetHost* host, ENetEvent* event) {
 static void asyncCallbackThreadFunc(void* context) {
     PQUEUED_ASYNC_CALLBACK queuedCb, nextCb;
 
+    PltSetThreadPriority(QOS_CLASS_USER_INTERACTIVE);
+
     while (LbqWaitForQueueElement(&asyncCallbackQueue, (void**)&queuedCb) == LBQ_SUCCESS) {
         switch (queuedCb->typeIndex) {
         case IDX_RUMBLE_DATA:
@@ -1084,6 +1086,9 @@ static void controlReceiveThreadFunc(void* context) {
     if (AppVersionQuad[0] < 5) {
         return;
     }
+
+    // High priority for control packets
+    PltSetThreadPriority(QOS_CLASS_USER_INITIATED);
 
     while (!PltIsThreadInterrupted(&controlReceiveThread)) {
         ENetEvent event;
@@ -1364,6 +1369,8 @@ static void controlReceiveThreadFunc(void* context) {
 static void lossStatsThreadFunc(void* context) {
     BYTE_BUFFER byteBuffer;
 
+    PltSetThreadPriority(QOS_CLASS_UTILITY);
+
     if (usePeriodicPing) {
         char periodicPingPayload[8];
 
@@ -1538,6 +1545,8 @@ static void requestInvalidateReferenceFrames(uint32_t startFrame, uint32_t endFr
 static void invalidateRefFramesFunc(void* context) {
     LC_ASSERT(isReferenceFrameInvalidationEnabled());
 
+    PltSetThreadPriority(QOS_CLASS_UTILITY);
+
     while (!PltIsThreadInterrupted(&invalidateRefFramesThread)) {
         PQUEUED_FRAME_INVALIDATION_TUPLE qfit;
         uint32_t startFrame;
@@ -1565,6 +1574,8 @@ static void invalidateRefFramesFunc(void* context) {
 }
 
 static void requestIdrFrameFunc(void* context) {
+    PltSetThreadPriority(QOS_CLASS_UTILITY);
+
     while (!PltIsThreadInterrupted(&requestIdrFrameThread)) {
         PltWaitForEvent(&idrFrameRequiredEvent);
         PltClearEvent(&idrFrameRequiredEvent);

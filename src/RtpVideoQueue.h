@@ -7,7 +7,7 @@ typedef struct _RTPV_QUEUE_ENTRY {
     struct _RTPV_QUEUE_ENTRY* prev;
     PRTP_PACKET packet;
     uint64_t receiveTimeMs;
-    uint32_t presentationTimeMs;
+    uint64_t presentationTimeUs;
     int length;
     bool isParity;
 } RTPV_QUEUE_ENTRY, *PRTPV_QUEUE_ENTRY;
@@ -43,7 +43,7 @@ typedef struct _RTP_VIDEO_QUEUE {
     uint8_t multiFecCurrentBlockNumber;
     uint8_t multiFecLastBlockNumber;
 
-    uint32_t lastOosFramePresentationTimestamp;
+    uint64_t lastOosFramePresentationTimestamp;
     bool receivedOosData;
 } RTP_VIDEO_QUEUE, *PRTP_VIDEO_QUEUE;
 

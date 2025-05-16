@@ -165,10 +165,10 @@ typedef struct _DECODE_UNIT {
     // can be calculated by LiGetMillis() - enqueueTimeMs.
     uint64_t enqueueTimeMs;
 
-    // Presentation time in milliseconds with the epoch at the first captured frame.
+    // Presentation time in microseconds with the epoch at the first captured frame.
     // This can be used to aid frame pacing or to drop old frames that were queued too
     // long prior to display.
-    unsigned int presentationTimeMs;
+    uint64_t presentationTimeUs;
 
     // Length of the entire buffer chain in bytes
     int fullLength;

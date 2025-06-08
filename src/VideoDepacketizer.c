@@ -20,7 +20,7 @@ static bool strictIdrFrameWait;
 static uint64_t syntheticPtsBase;
 static uint16_t frameHostProcessingLatency;
 static uint64_t firstPacketReceiveTime;
-static unsigned int firstPacketPresentationTime;
+static uint64_t firstPacketPresentationTime;
 static bool dropStatePending;
 static bool idrFrameProcessed;
 

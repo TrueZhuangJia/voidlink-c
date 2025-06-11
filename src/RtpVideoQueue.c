@@ -155,6 +155,7 @@ static bool queuePacket(PRTP_VIDEO_QUEUE queue, PRTPV_QUEUE_ENTRY newEntry, PRTP
     newEntry->prev = NULL;
     newEntry->next = NULL;
     newEntry->presentationTimeUs = ((uint64_t)packet->timestamp * 1000) / PTS_DIVISOR;
+    newEntry->rtpTimestamp = packet->timestamp;
 
     // FEC recovery packets are synthesized by us, so don't use them to determine OOS data
     if (!isFecRecovery) {

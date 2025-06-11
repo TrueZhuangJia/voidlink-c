@@ -170,6 +170,11 @@ typedef struct _DECODE_UNIT {
     // long prior to display.
     uint64_t presentationTimeUs;
 
+    // Original RTP timestamp in 90kHz units. Useful when using APIs that deal with integer
+    // time such as Apple's CMTime. To exactly recover the RTP timestamp, use something like
+    // CMTimeMake((int64_t)du->rtpTimestamp, 90000);
+    uint32_t rtpTimestamp;
+
     // Length of the entire buffer chain in bytes
     int fullLength;
 

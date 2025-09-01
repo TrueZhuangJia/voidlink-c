@@ -37,9 +37,11 @@ extern uint16_t RtspPortNumber;
 extern uint16_t ControlPortNumber;
 extern uint16_t AudioPortNumber;
 extern uint16_t VideoPortNumber;
+extern uint16_t MicPortNumber;
 
 extern SS_PING AudioPingPayload;
 extern SS_PING VideoPingPayload;
+extern SS_PING MicPingPayload;
 extern uint32_t ControlConnectData;
 
 extern uint32_t SunshineFeatureFlags;
@@ -151,3 +153,8 @@ int initializeInputStream(void);
 void destroyInputStream(void);
 int startInputStream(void);
 int stopInputStream(void);
+
+// 麦克风流函数声明
+int initializeMicrophoneStream(void);
+void destroyMicrophoneStream(void);
+int sendMicrophoneData(const char* data, int length);

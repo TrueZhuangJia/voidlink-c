@@ -195,4 +195,23 @@ typedef struct _SS_CONTROLLER_BATTERY_PACKET {
     uint8_t zero[1]; // Alignment/reserved
 } SS_CONTROLLER_BATTERY_PACKET, *PSS_CONTROLLER_BATTERY_PACKET;
 
+// 麦克风相关定义
+#define SS_MICROPHONE_MAGIC 0x55000008
+#define MIC_PACKET_MAGIC 0x12345678
+
+// 麦克风流控制命令
+#define MIC_CONTROL_START 0x01
+#define MIC_CONTROL_STOP  0x02
+
+// 麦克风流配置
+typedef struct _MIC_STREAM_CONFIGURATION {
+    int sampleRate;
+    int channelCount;
+    int bitrate;
+} MIC_STREAM_CONFIGURATION, *PMIC_STREAM_CONFIGURATION;
+
 #pragma pack(pop)
+
+int initializeMicrophoneStream(void);
+void destroyMicrophoneStream(void);
+int sendMicrophoneData(const char* data, int length);

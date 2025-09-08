@@ -1265,7 +1265,7 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
     }
     
     // Setup microphone stream if requested, before control stream to maintain logical order
-    if (StreamConfig.enableMic) {
+    if (StreamConfig.redirectMic) {
         RTSP_MESSAGE response;
         int error = -1;
         char* pingPayload;
@@ -1433,7 +1433,7 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
         }
 
         // Play microphone stream if it was setup
-        if (StreamConfig.enableMic) {
+        if (StreamConfig.redirectMic) {
             RTSP_MESSAGE response;
             int error = -1;
 

@@ -52,7 +52,8 @@ static const char* stageNames[STAGE_MAX] = {
     "control stream establishment",
     "video stream establishment",
     "audio stream establishment",
-    "input stream establishment"
+    "input stream establishment",
+    "mic stream establishment"
 };
 
 // Get the name of the current stage based on its number
@@ -74,7 +75,13 @@ void LiStopConnection(void) {
 
     // Set the interrupted flag
     LiInterruptConnection();
-
+    
+    if (stage == STAGE_MIC_STREAM_START) {
+        Limelog("Stopping mic stream...");
+        destroyMicrophoneStream();
+        stage--;
+        Limelog("done\n");
+    }
     if (stage == STAGE_INPUT_STREAM_START) {
         Limelog("Stopping input stream...");
         stopInputStream();
@@ -518,6 +525,19 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
     stage++;
     LC_ASSERT(stage == STAGE_INPUT_STREAM_START);
     ListenerCallbacks.stageComplete(STAGE_INPUT_STREAM_START);
+    Limelog("done\n");
+    
+    ListenerCallbacks.stageStarting(STAGE_MIC_STREAM_START);
+    err = initializeMicrophoneStream();
+    if (err != 0) {
+        Limelog("Mic stream start failed: %d\n", err);
+        ListenerCallbacks.stageFailed(STAGE_MIC_STREAM_START, err);
+        goto Cleanup;
+    }
+    stage++;
+    LC_ASSERT(stage == STAGE_MIC_STREAM_START);
+    ListenerCallbacks.stageComplete(STAGE_MIC_STREAM_START);
+    Limelog("Starting got port number: %d\n for mic stream", MicPortNumber);
     Limelog("done\n");
     
     // Wiggle the mouse a bit to wake the display up

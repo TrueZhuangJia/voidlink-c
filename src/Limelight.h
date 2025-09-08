@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "opus.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,7 +103,7 @@ typedef struct _STREAM_CONFIGURATION {
     char remoteInputAesIv[16];
     
     // Specifies whether to enable microphone streaming from the client to host
-    bool enableMic;
+    bool redirectMic;
 } STREAM_CONFIGURATION, *PSTREAM_CONFIGURATION;
 
 // Use this function to zero the stream configuration when allocated on the stack or heap
@@ -386,7 +387,8 @@ void LiInitializeAudioCallbacks(PAUDIO_RENDERER_CALLBACKS arCallbacks);
 #define STAGE_VIDEO_STREAM_START 9
 #define STAGE_AUDIO_STREAM_START 10
 #define STAGE_INPUT_STREAM_START 11
-#define STAGE_MAX 12
+#define STAGE_MIC_STREAM_START 12
+#define STAGE_MAX 13
 
 // This callback is invoked to indicate that a stage of initialization is about to begin
 typedef void(*ConnListenerStageStarting)(int stage);
@@ -967,6 +969,10 @@ bool LiGetHdrMetadata(PSS_HDR_METADATA metadata);
 // call this API instead. Note that this function does not guarantee that the *next* frame will be an IDR
 // frame, just that an IDR frame will arrive soon.
 void LiRequestIdrFrame(void);
+
+int sendMicrophoneData(const char* data, int length);
+void destroyMicrophoneStream(void);
+int opus_encoder_ctl_wrapper(OpusEncoder *enc, int request, int value);
 
 // This function returns any extended feature flags supported by the host.
 #define LI_FF_PEN_TOUCH_EVENTS        0x01 // LiSendTouchEvent()/LiSendPenEvent() supported

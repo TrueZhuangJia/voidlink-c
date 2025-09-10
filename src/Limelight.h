@@ -387,8 +387,9 @@ void LiInitializeAudioCallbacks(PAUDIO_RENDERER_CALLBACKS arCallbacks);
 #define STAGE_VIDEO_STREAM_START 9
 #define STAGE_AUDIO_STREAM_START 10
 #define STAGE_INPUT_STREAM_START 11
-#define STAGE_MIC_STREAM_START 12
-#define STAGE_MAX 13
+#define STAGE_MIC_STREAM_START 12 // here's the real stage_max
+#define STAGE_MIC_STREAM_UNSUPPORTED_OR_UNINITIALIZED 13 //must stay compatible with Sunshine that does not support mic redirection
+#define STAGE_MAX 14
 
 // This callback is invoked to indicate that a stage of initialization is about to begin
 typedef void(*ConnListenerStageStarting)(int stage);

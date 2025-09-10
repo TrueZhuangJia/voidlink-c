@@ -53,7 +53,8 @@ static const char* stageNames[STAGE_MAX] = {
     "video stream establishment",
     "audio stream establishment",
     "input stream establishment",
-    "mic stream establishment"
+    "mic stream establishment",
+    "mic stream unsupported or unintialized"
 };
 
 // Get the name of the current stage based on its number
@@ -536,8 +537,10 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
     }
     stage++;
     LC_ASSERT(stage == STAGE_MIC_STREAM_START);
-    ListenerCallbacks.stageComplete(STAGE_MIC_STREAM_START);
-    Limelog("Starting got port number: %d\n for mic stream", MicPortNumber);
+    if(MicPortNumber == 0) ListenerCallbacks.stageComplete(STAGE_MIC_STREAM_UNSUPPORTED_OR_UNINITIALIZED);
+    else ListenerCallbacks.stageComplete(STAGE_MIC_STREAM_START);
+
+    Limelog("Starting mic stream got port number: %d\n", MicPortNumber);
     Limelog("done\n");
     
     // Wiggle the mouse a bit to wake the display up

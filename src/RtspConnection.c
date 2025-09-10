@@ -1269,42 +1269,45 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
         RTSP_MESSAGE response;
         int error = -1;
         char* pingPayload;
+        
+        response.message.response.statusCode = -1000;
 
         if (!setupStream(&response,
                         AppVersionQuad[0] >= 5 ? "streamid=mic/0/0" : "streamid=mic",
                         &error)) {
             Limelog("RTSP SETUP streamid=mic request failed: %d\n", error);
-            ret = error;
-            goto Exit;
+            // ret = error;
+            // goto Exit;
         }
 
         if (response.message.response.statusCode != 200) {
             Limelog("RTSP SETUP streamid=mic request failed: %d\n",
                 response.message.response.statusCode);
-            ret = response.message.response.statusCode;
-            goto Exit;
+            // ret = response.message.response.statusCode;
+            // goto Exit;
         }
-
-        // Parse the microphone port out of the RTSP SETUP response
-        LC_ASSERT(MicPortNumber == 0);
-        if (!parseServerPortFromTransport(&response, &MicPortNumber)) {
-            // Use the well known port if parsing fails
-            MicPortNumber = 47996;
-
-            Limelog("Microphone port: %u (RTSP parsing failed)\n", MicPortNumber);
+        else{
+            // Parse the microphone port out of the RTSP SETUP response
+            LC_ASSERT(MicPortNumber == 0);
+            if (!parseServerPortFromTransport(&response, &MicPortNumber)) {
+                // Use the well known port if parsing fails
+                // MicPortNumber = 47996;
+                
+                Limelog("Microphone port: %u (RTSP parsing failed)\n", MicPortNumber);
+            }
+            else {
+                Limelog("Microphone port: %u\n", MicPortNumber);
+            }
+            
+            // Parse the Sunshine ping payload protocol extension if present
+            memset(&MicPingPayload, 0, sizeof(MicPingPayload));
+            pingPayload = getOptionContent(response.options, "X-SS-Ping-Payload");
+            if (pingPayload != NULL && strlen(pingPayload) == sizeof(MicPingPayload.payload)) {
+                memcpy(MicPingPayload.payload, pingPayload, sizeof(MicPingPayload.payload));
+            }
+            
+            freeMessage(&response);
         }
-        else {
-            Limelog("Microphone port: %u\n", MicPortNumber);
-        }
-
-        // Parse the Sunshine ping payload protocol extension if present
-        memset(&MicPingPayload, 0, sizeof(MicPingPayload));
-        pingPayload = getOptionContent(response.options, "X-SS-Ping-Payload");
-        if (pingPayload != NULL && strlen(pingPayload) == sizeof(MicPingPayload.payload)) {
-            memcpy(MicPingPayload.payload, pingPayload, sizeof(MicPingPayload.payload));
-        }
-
-        freeMessage(&response);
     }
     
     if (AppVersionQuad[0] >= 5) {

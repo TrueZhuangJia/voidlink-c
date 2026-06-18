@@ -747,9 +747,30 @@ void LiGetMousePosition(float* x, float* y);
 #define LI_TOUCH_EVENT_BUTTON_ONLY 0x05
 #define LI_TOUCH_EVENT_HOVER_LEAVE 0x06
 #define LI_TOUCH_EVENT_CANCEL_ALL  0x07
+#define LI_TOUCHPAD_BUTTON_PRIMARY 0x01
 #define LI_ROT_UNKNOWN 0xFFFF
 int LiSendTouchEvent(uint8_t eventType, uint32_t pointerId, float x, float y, float pressureOrDistance,
                      float contactAreaMajor, float contactAreaMinor, uint16_t rotation);
+
+// This function sends raw laptop-style touchpad contacts to Sunshine. Unlike LiSendTouchEvent(),
+// x/y are normalized coordinates on the physical touchpad surface, not the remote display.
+// deviceWidthMm/deviceHeightMm describe the physical touchpad size and may be 0 if unknown.
+// buttonState is a bitmask of LI_TOUCHPAD_BUTTON_* values.
+//
+// To determine if LiSendTouchpadEvent() is supported without calling it, call
+// LiGetHostFeatureFlags() and check for the LI_FF_TOUCHPAD_EVENTS flag.
+int LiSendTouchpadEvent(uint8_t eventType, uint32_t pointerId, float x, float y, float pressure,
+                        float contactAreaMajor, float contactAreaMinor, uint16_t rotation,
+                        uint16_t deviceWidthMm, uint16_t deviceHeightMm, uint8_t buttonState);
+
+// This function sends all native touchpad contact changes that belong to the same hardware frame.
+// The arrays must contain contactCount entries. x/y/pressure values are normalized 0.0-1.0.
+// Unlike LiSendTouchpadEvent(), frame events do not carry contact area.
+// To determine if this is supported, call LiGetHostFeatureFlags() and check for the
+// LI_FF_TOUCHPAD_FRAME_EVENTS flag. If unsupported, callers can fall back to LiSendTouchpadEvent().
+int LiSendTouchpadFrameEvent(uint8_t contactCount, const uint8_t* eventTypes, const uint32_t* pointerIds,
+                             const float* x, const float* y, const float* pressure, uint16_t rotation,
+                             uint16_t deviceWidthMm, uint16_t deviceHeightMm, uint8_t buttonState);
 
 // This function is similar to LiSendTouchEvent() but allows additional parameters relevant for pen
 // input, including tilt and buttons. Tilt is in degrees from vertical in Z dimension (perpendicular
@@ -1117,6 +1138,8 @@ bool isMicrophoneEncryptionEnabled(void);
 // This function returns any extended feature flags supported by the host.
 #define LI_FF_PEN_TOUCH_EVENTS        0x01 // LiSendTouchEvent()/LiSendPenEvent() supported
 #define LI_FF_CONTROLLER_TOUCH_EVENTS 0x02 // LiSendControllerTouchEvent() supported
+#define LI_FF_TOUCHPAD_EVENTS         0x10 // LiSendTouchpadEvent() supported
+#define LI_FF_TOUCHPAD_FRAME_EVENTS   0x20 // LiSendTouchpadFrameEvent() supported
 #define LI_FF_DS5_HAPTICS_PCM         0x80 // Host can stream authored DualSense stereo PCM
 uint32_t LiGetHostFeatureFlags(void);
 

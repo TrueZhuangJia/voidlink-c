@@ -432,6 +432,19 @@ static bool isFillerDataNal(PBUFFER_DESC buffer) {
 }
 #endif
 
+// Picture NALs may be followed by a preserved suffix-SEI in the same RTP
+// payload. Keep that metadata in the slow path instead of treating it as an
+// invalid slice tail.
+static bool isAllowedPictureTailNal(PBUFFER_DESC buffer) {
+#ifdef LC_DEBUG
+    return isSeqReferenceFrameStart(buffer) ||
+           isFillerDataNal(buffer) ||
+           shouldPreserveHevcSei(buffer);
+#else
+    return isSeqReferenceFrameStart(buffer) || shouldPreserveHevcSei(buffer);
+#endif
+}
+
 static bool isPictureParameterSetNal(PBUFFER_DESC buffer) {
     BUFFER_DESC startSeq;
 
@@ -748,8 +761,8 @@ static void processAvcHevcRtpPayloadSlow(PBUFFER_DESC currentPos, PLENTRY_INTERN
         if (containsPicData) {
             while (currentPos->length != 0) {
                 // Any NALUs we encounter on the way to the end of the packet must be
-                // reference frame slices or filler data.
-                LC_ASSERT_VT(isSeqReferenceFrameStart(currentPos) || isFillerDataNal(currentPos));
+                // reference frame slices, filler data, or preserved suffix-SEI.
+                LC_ASSERT_VT(isAllowedPictureTailNal(currentPos));
                 skipToNextNalOrEnd(currentPos);
             }
         }

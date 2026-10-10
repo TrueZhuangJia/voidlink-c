@@ -70,6 +70,33 @@ int main(void) {
     nalChainTail = NULL;
     nalChainDataLength = 0;
 
+    // Preserved prefix-SEI is also legal between HEVC parameter sets. The
+    // structural validator must ignore it while retaining it in the chain.
+    char vps[] = {0, 0, 0, 1, (char)(32 << 1), 0x01};
+    char seiA[] = {0, 0, 0, 1, (char)(39 << 1), 0x01};
+    char sps[] = {0, 0, 0, 1, (char)(33 << 1), 0x01};
+    char seiB[] = {0, 0, 0, 1, (char)(40 << 1), 0x01};
+    char pps[] = {0, 0, 0, 1, (char)(34 << 1), 0x01};
+    char slice[] = {0, 0, 0, 1, (char)(19 << 1), 0x01};
+    LENTRY entries[6] = {
+        {.data = vps, .length = (int)sizeof(vps)},
+        {.data = seiA, .length = (int)sizeof(seiA)},
+        {.data = sps, .length = (int)sizeof(sps)},
+        {.data = seiB, .length = (int)sizeof(seiB)},
+        {.data = pps, .length = (int)sizeof(pps)},
+        {.data = slice, .length = (int)sizeof(slice)},
+    };
+    for (size_t i = 0; i < 6; i++) {
+        entries[i].next = i + 1 < 6 ? &entries[i + 1] : NULL;
+        entries[i].bufferType = getBufferFlags(entries[i].data, entries[i].length);
+    }
+    DECODE_UNIT decodeUnit = {0};
+    decodeUnit.bufferList = &entries[0];
+    decodeUnit.fullLength = sizeof(vps) + sizeof(seiA) + sizeof(sps) +
+                            sizeof(seiB) + sizeof(pps) + sizeof(slice);
+    decodeUnit.frameType = FRAME_TYPE_IDR;
+    validateDecodeUnitForPlayback(&decodeUnit);
+
     VideoCallbacks.capabilities = 0;
     if (shouldPreserveHevcSei(&descriptor)) {
         fprintf(stderr, "FAIL: renderer without opt-in must not preserve SEI\n");

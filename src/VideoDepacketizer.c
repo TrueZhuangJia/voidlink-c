@@ -193,6 +193,7 @@ static bool getAnnexBStartSequence(PBUFFER_DESC current, PBUFFER_DESC startSeq) 
 
 static bool isSeiNal(PBUFFER_DESC buffer);
 static bool shouldPreserveHevcSei(PBUFFER_DESC buffer);
+static PLENTRY skipPreservedHevcSeiBuffers(PLENTRY buffer);
 
 void validateDecodeUnitForPlayback(PDECODE_UNIT decodeUnit) {
     PLENTRY firstBuffer = decodeUnit->bufferList;
@@ -201,23 +202,13 @@ void validateDecodeUnitForPlayback(PDECODE_UNIT decodeUnit) {
     LC_ASSERT(decodeUnit->bufferList != NULL);
     LC_ASSERT(decodeUnit->fullLength != 0);
 
-    // An opted-in HEVC renderer may receive prefix SEI before VPS/SPS/PPS.
-    // Ignore those entries only for structural validation; they remain in the
-    // decode unit passed to the renderer.
+    // An opted-in HEVC renderer may receive prefix SEI before or between
+    // VPS/SPS/PPS. Ignore those entries only for structural validation; they
+    // remain in the decode unit passed to the renderer.
     if (decodeUnit->frameType == FRAME_TYPE_IDR &&
         (VideoCallbacks.capabilities & CAPABILITY_PRESERVE_HEVC_SEI) != 0 &&
         (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_H265) != 0) {
-        while (firstBuffer != NULL) {
-            BUFFER_DESC buffer = {
-                .data = firstBuffer->data,
-                .offset = 0,
-                .length = (unsigned int)firstBuffer->length,
-            };
-            if (!shouldPreserveHevcSei(&buffer)) {
-                break;
-            }
-            firstBuffer = firstBuffer->next;
-        }
+        firstBuffer = skipPreservedHevcSeiBuffers(firstBuffer);
     }
 
     // Validate the buffers in the frame
@@ -235,11 +226,14 @@ void validateDecodeUnitForPlayback(PDECODE_UNIT decodeUnit) {
             // HEVC IDR frames should have an VPS, SPS, PPS, then picture data
             LC_ASSERT_VT(firstBuffer != NULL);
             LC_ASSERT_VT(firstBuffer->bufferType == BUFFER_TYPE_VPS);
-            LC_ASSERT_VT(firstBuffer->next != NULL);
-            LC_ASSERT_VT(firstBuffer->next->bufferType == BUFFER_TYPE_SPS);
-            LC_ASSERT_VT(firstBuffer->next->next != NULL);
-            LC_ASSERT_VT(firstBuffer->next->next->bufferType == BUFFER_TYPE_PPS);
-            LC_ASSERT_VT(firstBuffer->next->next->next != NULL);
+            firstBuffer = skipPreservedHevcSeiBuffers(firstBuffer->next);
+            LC_ASSERT_VT(firstBuffer != NULL);
+            LC_ASSERT_VT(firstBuffer->bufferType == BUFFER_TYPE_SPS);
+            firstBuffer = skipPreservedHevcSeiBuffers(firstBuffer->next);
+            LC_ASSERT_VT(firstBuffer != NULL);
+            LC_ASSERT_VT(firstBuffer->bufferType == BUFFER_TYPE_PPS);
+            firstBuffer = skipPreservedHevcSeiBuffers(firstBuffer->next);
+            LC_ASSERT_VT(firstBuffer != NULL);
         }
         else if (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_AV1) {
             // We don't parse the AV1 bitstream
@@ -409,6 +403,21 @@ static bool shouldPreserveHevcSei(PBUFFER_DESC buffer) {
     return (VideoCallbacks.capabilities & CAPABILITY_PRESERVE_HEVC_SEI) != 0 &&
            (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_H265) != 0 &&
            isSeiNal(buffer);
+}
+
+static PLENTRY skipPreservedHevcSeiBuffers(PLENTRY buffer) {
+    while (buffer != NULL) {
+        BUFFER_DESC descriptor = {
+            .data = buffer->data,
+            .offset = 0,
+            .length = (unsigned int)buffer->length,
+        };
+        if (!shouldPreserveHevcSei(&descriptor)) {
+            break;
+        }
+        buffer = buffer->next;
+    }
+    return buffer;
 }
 
 #ifdef LC_DEBUG
@@ -713,9 +722,9 @@ static void queueFragment(PLENTRY_INTERNAL* existingEntry, char* data, int offse
 
 // Process an RTP Payload using the slow path that handles multiple NALUs per packet
 static void processAvcHevcRtpPayloadSlow(PBUFFER_DESC currentPos, PLENTRY_INTERNAL* existingEntry) {
-    // We should not have any NALUs when processing the first packet in an IDR frame
-    LC_ASSERT(nalChainHead == NULL);
-    LC_ASSERT(nalChainTail == NULL);
+    // The first packet may contain only preserved prefix-SEI. When the VPS
+    // arrives in a later RTP packet, continue appending to that existing chain.
+    LC_ASSERT((nalChainHead == NULL) == (nalChainTail == NULL));
 
     while (currentPos->length != 0) {
         // Skip through any padding bytes
@@ -1066,9 +1075,14 @@ static void processRtpPayload(PNV_VIDEO_PACKET videoPacket, int length,
     }
 
     if (NegotiatedVideoFormat & (VIDEO_FORMAT_MASK_H264 | VIDEO_FORMAT_MASK_H265)) {
-        if (firstPacket &&
-            (isIdrFrameStart(&currentPos) ||
-             isIdrFrameStartAfterPreservedSei(&currentPos))) {
+        bool continueHevcIdrParse = !firstPacket &&
+                                     waitingForIdrFrame &&
+                                     nalChainHead != NULL &&
+                                     (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_H265) != 0;
+        if ((firstPacket &&
+             (isIdrFrameStart(&currentPos) ||
+              isIdrFrameStartAfterPreservedSei(&currentPos))) ||
+            continueHevcIdrParse) {
             // SPS and PPS prefix is padded between NALs, so we must decode it with the slow path
             processAvcHevcRtpPayloadSlow(&currentPos, existingEntry);
         }

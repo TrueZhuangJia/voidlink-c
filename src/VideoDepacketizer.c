@@ -24,6 +24,10 @@ static uint64_t firstPacketPresentationTime;
 static uint32_t firstPacketRtpTimestamp;
 static bool dropStatePending;
 static bool idrFrameProcessed;
+// True after an IDR candidate starts with preserved metadata or parameter
+// sets, allowing the remaining parameter sets/slices to arrive in later RTP
+// packets without losing the key-frame parse state.
+static bool pendingHevcIdrParse;
 
 #define DR_CLEANUP -1000
 
@@ -78,6 +82,7 @@ void initializeVideoDepacketizer(int pktSize) {
     lastPacketPayloadLength = 0;
     dropStatePending = false;
     idrFrameProcessed = false;
+    pendingHevcIdrParse = false;
     strictIdrFrameWait = !isReferenceFrameInvalidationEnabled();
 }
 
@@ -874,6 +879,7 @@ static void processRtpPayload(PNV_VIDEO_PACKET videoPacket, int length,
     // Check sequencing of this frame to ensure we didn't
     // miss one in between
     if (firstPacket) {
+        pendingHevcIdrParse = false;
         // Make sure this is the next consecutive frame
         if (isBefore32(nextFrameNumber, frameIndex)) {
             if (nextFrameNumber + 1 == frameIndex) {
@@ -1075,16 +1081,29 @@ static void processRtpPayload(PNV_VIDEO_PACKET videoPacket, int length,
     }
 
     if (NegotiatedVideoFormat & (VIDEO_FORMAT_MASK_H264 | VIDEO_FORMAT_MASK_H265)) {
+        bool hevcIdrCandidate = (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_H265) != 0 &&
+                                waitingForIdrFrame &&
+                                (isSeiNal(&currentPos) ||
+                                 isIdrFrameStart(&currentPos) ||
+                                 isIdrFrameStartAfterPreservedSei(&currentPos));
+        if (firstPacket && hevcIdrCandidate) {
+            pendingHevcIdrParse = true;
+        }
+
         bool continueHevcIdrParse = !firstPacket &&
                                      waitingForIdrFrame &&
+                                     pendingHevcIdrParse &&
                                      nalChainHead != NULL &&
-                                     (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_H265) != 0;
+                                     getAnnexBStartSequence(&currentPos, NULL);
         if ((firstPacket &&
              (isIdrFrameStart(&currentPos) ||
               isIdrFrameStartAfterPreservedSei(&currentPos))) ||
             continueHevcIdrParse) {
             // SPS and PPS prefix is padded between NALs, so we must decode it with the slow path
             processAvcHevcRtpPayloadSlow(&currentPos, existingEntry);
+            if (!waitingForIdrFrame) {
+                pendingHevcIdrParse = false;
+            }
         }
         else {
             // Intel's H.264 Media Foundation encoder prepends a PPS to each P-frame.

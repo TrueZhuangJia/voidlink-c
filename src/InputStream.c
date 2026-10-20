@@ -844,6 +844,11 @@ int LiSendMousePositionEvent(short x, short y, short referenceWidth, short refer
     return err;
 }
 
+void LiGetMousePosition(float* x, float* y) {
+    *x = absCurrentPosX;
+    *y = absCurrentPosY;
+}
+
 // Send a relative motion event using absolute position to the streaming machine
 int LiSendMouseMoveAsMousePositionEvent(short deltaX, short deltaY, short referenceWidth, short referenceHeight) {
     // Convert the current position to be relative to the provided reference dimensions

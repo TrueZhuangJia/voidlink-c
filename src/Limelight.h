@@ -698,6 +698,8 @@ int LiSendMousePositionEvent(short x, short y, short referenceWidth, short refer
 // Using this function avoids double-acceleration in cases when the client motion is also accelerated.
 int LiSendMouseMoveAsMousePositionEvent(short deltaX, short deltaY, short referenceWidth, short referenceHeight);
 
+void LiGetMousePosition(float* x, float* y);
+
 // Error return value to indicate that the requested functionality is not supported by the host
 #define LI_ERR_UNSUPPORTED -5501
 

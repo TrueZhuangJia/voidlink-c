@@ -71,6 +71,7 @@ typedef struct _PACKET_HOLDER {
         SS_TOUCH_PACKET touch;
         SS_TOUCHPAD_PACKET touchpad;
         SS_TOUCHPAD_FRAME_PACKET touchpadFrame;
+        SS_MAC_MAGNIFY_PACKET macMagnify;
         SS_PEN_PACKET pen;
         SS_PEN_BARREL_ROLL_PACKET penBarrelRoll;
         SS_CONTROLLER_ARRIVAL_PACKET controllerArrival;
@@ -1531,6 +1532,33 @@ int LiSendTouchpadFrameEvent(uint8_t contactCount, const uint8_t* eventTypes, co
         freePacketHolder(holder);
     }
 
+    return err;
+}
+
+int LiSendMacMagnifyEvent(uint8_t phase, float amount) {
+    if (!initialized) {
+        return -2;
+    }
+    if (!LiGetHostMacTrackpadSimulation()) {
+        return LI_ERR_UNSUPPORTED;
+    }
+
+    PPACKET_HOLDER holder = allocatePacketHolder(0);
+    if (holder == NULL) {
+        return -1;
+    }
+
+    holder->channelId = CTRL_CHANNEL_MOUSE;
+    holder->enetPacketFlags = ENET_PACKET_FLAG_RELIABLE;
+    holder->packet.macMagnify.header.size = BE32(sizeof(SS_MAC_MAGNIFY_PACKET) - sizeof(uint32_t));
+    holder->packet.macMagnify.header.magic = LE32(SS_MAC_MAGNIFY_MAGIC);
+    holder->packet.macMagnify.phase = phase;
+    floatToNetfloat(amount, holder->packet.macMagnify.amount);
+
+    const int err = LbqOfferQueueItem(&packetQueue, holder, &holder->entry);
+    if (err != LBQ_SUCCESS) {
+        freePacketHolder(holder);
+    }
     return err;
 }
 

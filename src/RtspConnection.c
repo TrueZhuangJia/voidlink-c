@@ -1174,6 +1174,16 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
         uint32_t penBarrelRollSupported;
         SunshinePenBarrelRollSupported = parseSdpAttributeToUInt(response.payload, "x-ss-general.penBarrelRoll", &penBarrelRollSupported) && penBarrelRollSupported != 0;
 
+        uint32_t macNativeTouchWorkaround;
+        SunshineMacNativeTouchWorkaroundSupported =
+            parseSdpAttributeToUInt(response.payload, "x-ss-general.macNativeTouchWorkaround", &macNativeTouchWorkaround) &&
+            macNativeTouchWorkaround != 0;
+
+        uint32_t macTrackpadSimulation;
+        SunshineMacTrackpadSimulationSupported =
+            parseSdpAttributeToUInt(response.payload, "x-ss-general.macTrackpadSimulation", &macTrackpadSimulation) &&
+            macTrackpadSimulation != 0;
+
         // Look for the Sunshine encryption flags in the SDP attributes
         if (!parseSdpAttributeToUInt(response.payload, "x-ss-general.encryptionSupported", &EncryptionFeaturesSupported)) {
             EncryptionFeaturesSupported = 0;

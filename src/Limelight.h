@@ -779,6 +779,13 @@ int LiSendTouchpadFrameEvent(uint8_t contactCount, const uint8_t* eventTypes, co
 // x, y, pressure, rotation, contact area, and tilt are ignored for LI_TOUCH_EVENT_BUTTON_ONLY events.
 // If one of those changes, send LI_TOUCH_EVENT_MOVE or LI_TOUCH_EVENT_HOVER instead.
 //
+// Incremental magnification for hosts advertising macTrackpadSimulation.
+#define LI_MAC_MAGNIFY_BEGIN  1
+#define LI_MAC_MAGNIFY_CHANGE 2
+#define LI_MAC_MAGNIFY_END    4
+#define LI_MAC_MAGNIFY_CANCEL 8
+int LiSendMacMagnifyEvent(uint8_t phase, float amount);
+
 // To determine if LiSendPenEvent() is supported without calling it, call LiGetHostFeatureFlags()
 // and check for the LI_FF_PEN_TOUCH_EVENTS flag.
 #define LI_TOOL_TYPE_UNKNOWN 0x00
@@ -1142,6 +1149,12 @@ bool isMicrophoneEncryptionEnabled(void);
 #define LI_FF_TOUCHPAD_FRAME_EVENTS   0x20 // LiSendTouchpadFrameEvent() supported
 #define LI_FF_DS5_HAPTICS_PCM         0x80 // Host can stream authored DualSense stereo PCM
 uint32_t LiGetHostFeatureFlags(void);
+
+// Returns whether the host advertised macNativeTouchWorkaround in RTSP DESCRIBE.
+bool LiGetHostMacNativeTouchWorkaround(void);
+
+// Returns whether the host advertised macTrackpadSimulation in RTSP DESCRIBE.
+bool LiGetHostMacTrackpadSimulation(void);
 
 extern bool appDidEnterBackgroundWithoutPip;
 

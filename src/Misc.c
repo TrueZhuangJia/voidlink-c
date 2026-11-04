@@ -156,6 +156,14 @@ uint32_t LiGetHostFeatureFlags(void) {
     return SunshineFeatureFlags;
 }
 
+bool LiGetHostMacNativeTouchWorkaround(void) {
+    return SunshineMacNativeTouchWorkaroundSupported;
+}
+
+bool LiGetHostMacTrackpadSimulation(void) {
+    return SunshineMacTrackpadSimulationSupported;
+}
+
 int LiGetNegotiatedDynamicHdrFormat(void) {
     return NegotiatedDynamicHdrFormat;
 }

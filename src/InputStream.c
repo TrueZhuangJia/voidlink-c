@@ -72,7 +72,7 @@ typedef struct _PACKET_HOLDER {
         SS_TOUCHPAD_PACKET touchpad;
         SS_TOUCHPAD_FRAME_PACKET touchpadFrame;
         SS_APPLE_PENCIL_SIDE_BUTTON_PACKET applePencilSideButton;
-        SS_MAC_MAGNIFY_PACKET macMagnify;
+        SS_MAC_TRACKPAD_GESTURE_PACKET macTrackpadGesture;
         SS_PEN_PACKET pen;
         SS_PEN_BARREL_ROLL_PACKET penBarrelRoll;
         SS_CONTROLLER_ARRIVAL_PACKET controllerArrival;
@@ -1536,11 +1536,11 @@ int LiSendTouchpadFrameEvent(uint8_t contactCount, const uint8_t* eventTypes, co
     return err;
 }
 
-int LiSendMacMagnifyEvent(uint8_t phase, float amount) {
+static int sendMacTrackpadGesture(bool supported, uint32_t magic, uint8_t phase, float amount) {
     if (!initialized) {
         return -2;
     }
-    if (!LiGetHostMacTrackpadSimulation()) {
+    if (!supported) {
         return LI_ERR_UNSUPPORTED;
     }
 
@@ -1551,16 +1551,24 @@ int LiSendMacMagnifyEvent(uint8_t phase, float amount) {
 
     holder->channelId = CTRL_CHANNEL_MOUSE;
     holder->enetPacketFlags = ENET_PACKET_FLAG_RELIABLE;
-    holder->packet.macMagnify.header.size = BE32(sizeof(SS_MAC_MAGNIFY_PACKET) - sizeof(uint32_t));
-    holder->packet.macMagnify.header.magic = LE32(SS_MAC_MAGNIFY_MAGIC);
-    holder->packet.macMagnify.phase = phase;
-    floatToNetfloat(amount, holder->packet.macMagnify.amount);
+    holder->packet.macTrackpadGesture.header.size = BE32(sizeof(SS_MAC_TRACKPAD_GESTURE_PACKET) - sizeof(uint32_t));
+    holder->packet.macTrackpadGesture.header.magic = LE32(magic);
+    holder->packet.macTrackpadGesture.phase = phase;
+    floatToNetfloat(amount, holder->packet.macTrackpadGesture.amount);
 
     const int err = LbqOfferQueueItem(&packetQueue, holder, &holder->entry);
     if (err != LBQ_SUCCESS) {
         freePacketHolder(holder);
     }
     return err;
+}
+
+int LiSendMacMagnifyEvent(uint8_t phase, float amount) {
+    return sendMacTrackpadGesture(LiGetHostMacTrackpadSimulation(), SS_MAC_MAGNIFY_MAGIC, phase, amount);
+}
+
+int LiSendMacRotateEvent(uint8_t phase, float degrees) {
+    return sendMacTrackpadGesture(LiGetHostMacTrackpadRotate(), SS_MAC_ROTATE_MAGIC, phase, degrees);
 }
 
 int LiSendApplePencilSideButtonEvent(uint8_t eventType, float x, float y) {

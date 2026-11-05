@@ -42,6 +42,7 @@ bool SunshinePenBarrelRollSupported;
 bool SunshineMacNativeTouchWorkaroundSupported;
 bool SunshineApplePencilSideButtonsSupported;
 bool SunshineMacTrackpadSimulationSupported;
+bool SunshineMacTrackpadRotateSupported;
 uint32_t EncryptionFeaturesSupported;
 uint32_t EncryptionFeaturesRequested;
 uint32_t EncryptionFeaturesEnabled;
@@ -230,6 +231,7 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
     SunshineMacNativeTouchWorkaroundSupported = false;
     SunshineApplePencilSideButtonsSupported = false;
     SunshineMacTrackpadSimulationSupported = false;
+    SunshineMacTrackpadRotateSupported = false;
 
     if (drCallbacks != NULL && (drCallbacks->capabilities & CAPABILITY_PULL_RENDERER) && drCallbacks->submitDecodeUnit) {
         Limelog("CAPABILITY_PULL_RENDERER cannot be set with a submitDecodeUnit callback\n");

@@ -1189,6 +1189,11 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
             parseSdpAttributeToUInt(response.payload, "x-ss-general.macTrackpadSimulation", &macTrackpadSimulation) &&
             macTrackpadSimulation != 0;
 
+        uint32_t macTrackpadRotate;
+        SunshineMacTrackpadRotateSupported = SunshineMacTrackpadSimulationSupported &&
+            parseSdpAttributeToUInt(response.payload, "x-ss-general.macTrackpadRotate", &macTrackpadRotate) &&
+            macTrackpadRotate != 0;
+
         // Look for the Sunshine encryption flags in the SDP attributes
         if (!parseSdpAttributeToUInt(response.payload, "x-ss-general.encryptionSupported", &EncryptionFeaturesSupported)) {
             EncryptionFeaturesSupported = 0;

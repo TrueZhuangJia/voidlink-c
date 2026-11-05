@@ -786,6 +786,8 @@ int LiSendTouchpadFrameEvent(uint8_t contactCount, const uint8_t* eventTypes, co
 #define LI_MAC_MAGNIFY_CANCEL 8
 int LiSendMacMagnifyEvent(uint8_t phase, float amount);
 
+int LiSendMacRotateEvent(uint8_t phase, float degrees);
+
 // Apple Pencil gestures for hosts advertising applePencilSideButtons.
 // x and y are normalized video coordinates.
 #define LI_APPLE_PENCIL_DOUBLE_TAP       0
@@ -1167,6 +1169,9 @@ bool LiGetHostApplePencilSideButtons(void);
 
 // Returns whether the host advertised macTrackpadSimulation in RTSP DESCRIBE.
 bool LiGetHostMacTrackpadSimulation(void);
+
+// Returns whether the host advertised macTrackpadRotate in RTSP DESCRIBE.
+bool LiGetHostMacTrackpadRotate(void);
 
 extern bool appDidEnterBackgroundWithoutPip;
 

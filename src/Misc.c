@@ -168,6 +168,10 @@ bool LiGetHostMacTrackpadSimulation(void) {
     return SunshineMacTrackpadSimulationSupported;
 }
 
+bool LiGetHostMacTrackpadRotate(void) {
+    return SunshineMacTrackpadRotateSupported;
+}
+
 int LiGetNegotiatedDynamicHdrFormat(void) {
     return NegotiatedDynamicHdrFormat;
 }

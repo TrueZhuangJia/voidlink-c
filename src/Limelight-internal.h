@@ -49,6 +49,7 @@ extern uint32_t ControlConnectData;
 extern uint32_t SunshineFeatureFlags;
 extern bool SunshinePenBarrelRollSupported;
 extern bool SunshineMacNativeTouchWorkaroundSupported;
+extern bool SunshineApplePencilSideButtonsSupported;
 extern bool SunshineMacTrackpadSimulationSupported;
 
 // Encryption flags shared by Sunshine and Moonlight in RTSP

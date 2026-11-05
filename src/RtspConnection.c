@@ -1179,6 +1179,11 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
             parseSdpAttributeToUInt(response.payload, "x-ss-general.macNativeTouchWorkaround", &macNativeTouchWorkaround) &&
             macNativeTouchWorkaround != 0;
 
+        uint32_t applePencilSideButtons;
+        SunshineApplePencilSideButtonsSupported =
+            parseSdpAttributeToUInt(response.payload, "x-ss-general.applePencilSideButtons", &applePencilSideButtons) &&
+            applePencilSideButtons != 0;
+
         uint32_t macTrackpadSimulation;
         SunshineMacTrackpadSimulationSupported =
             parseSdpAttributeToUInt(response.payload, "x-ss-general.macTrackpadSimulation", &macTrackpadSimulation) &&

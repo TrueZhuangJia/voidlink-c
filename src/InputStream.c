@@ -71,6 +71,7 @@ typedef struct _PACKET_HOLDER {
         SS_TOUCH_PACKET touch;
         SS_TOUCHPAD_PACKET touchpad;
         SS_TOUCHPAD_FRAME_PACKET touchpadFrame;
+        SS_APPLE_PENCIL_SIDE_BUTTON_PACKET applePencilSideButton;
         SS_MAC_MAGNIFY_PACKET macMagnify;
         SS_PEN_PACKET pen;
         SS_PEN_BARREL_ROLL_PACKET penBarrelRoll;
@@ -1554,6 +1555,35 @@ int LiSendMacMagnifyEvent(uint8_t phase, float amount) {
     holder->packet.macMagnify.header.magic = LE32(SS_MAC_MAGNIFY_MAGIC);
     holder->packet.macMagnify.phase = phase;
     floatToNetfloat(amount, holder->packet.macMagnify.amount);
+
+    const int err = LbqOfferQueueItem(&packetQueue, holder, &holder->entry);
+    if (err != LBQ_SUCCESS) {
+        freePacketHolder(holder);
+    }
+    return err;
+}
+
+int LiSendApplePencilSideButtonEvent(uint8_t eventType, float x, float y) {
+    if (!initialized) {
+        return -2;
+    }
+    if (!LiGetHostApplePencilSideButtons()) {
+        return LI_ERR_UNSUPPORTED;
+    }
+
+    PPACKET_HOLDER holder = allocatePacketHolder(0);
+    if (holder == NULL) {
+        return -1;
+    }
+
+    holder->channelId = CTRL_CHANNEL_PEN;
+    holder->enetPacketFlags = eventType == LI_APPLE_PENCIL_SQUEEZE_CHANGE ? 0 : ENET_PACKET_FLAG_RELIABLE;
+    SS_APPLE_PENCIL_SIDE_BUTTON_PACKET* packet = &holder->packet.applePencilSideButton;
+    packet->header.size = BE32(sizeof(*packet) - sizeof(uint32_t));
+    packet->header.magic = LE32(SS_APPLE_PENCIL_SIDE_BUTTON_MAGIC);
+    packet->eventType = eventType;
+    floatToNetfloat(x, packet->x);
+    floatToNetfloat(y, packet->y);
 
     const int err = LbqOfferQueueItem(&packetQueue, holder, &holder->entry);
     if (err != LBQ_SUCCESS) {

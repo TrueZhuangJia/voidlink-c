@@ -786,6 +786,15 @@ int LiSendTouchpadFrameEvent(uint8_t contactCount, const uint8_t* eventTypes, co
 #define LI_MAC_MAGNIFY_CANCEL 8
 int LiSendMacMagnifyEvent(uint8_t phase, float amount);
 
+// Apple Pencil gestures for hosts advertising applePencilSideButtons.
+// x and y are normalized video coordinates.
+#define LI_APPLE_PENCIL_DOUBLE_TAP       0
+#define LI_APPLE_PENCIL_SQUEEZE_BEGIN    1
+#define LI_APPLE_PENCIL_SQUEEZE_CHANGE   2
+#define LI_APPLE_PENCIL_SQUEEZE_END      4
+#define LI_APPLE_PENCIL_SQUEEZE_CANCEL   8
+int LiSendApplePencilSideButtonEvent(uint8_t eventType, float x, float y);
+
 // To determine if LiSendPenEvent() is supported without calling it, call LiGetHostFeatureFlags()
 // and check for the LI_FF_PEN_TOUCH_EVENTS flag.
 #define LI_TOOL_TYPE_UNKNOWN 0x00
@@ -1152,6 +1161,9 @@ uint32_t LiGetHostFeatureFlags(void);
 
 // Returns whether the host advertised macNativeTouchWorkaround in RTSP DESCRIBE.
 bool LiGetHostMacNativeTouchWorkaround(void);
+
+// Returns whether the host advertised applePencilSideButtons in RTSP DESCRIBE.
+bool LiGetHostApplePencilSideButtons(void);
 
 // Returns whether the host advertised macTrackpadSimulation in RTSP DESCRIBE.
 bool LiGetHostMacTrackpadSimulation(void);

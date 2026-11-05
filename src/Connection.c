@@ -40,6 +40,7 @@ uint32_t ControlConnectData;
 uint32_t SunshineFeatureFlags;
 bool SunshinePenBarrelRollSupported;
 bool SunshineMacNativeTouchWorkaroundSupported;
+bool SunshineApplePencilSideButtonsSupported;
 bool SunshineMacTrackpadSimulationSupported;
 uint32_t EncryptionFeaturesSupported;
 uint32_t EncryptionFeaturesRequested;
@@ -227,6 +228,7 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
     int err;
 
     SunshineMacNativeTouchWorkaroundSupported = false;
+    SunshineApplePencilSideButtonsSupported = false;
     SunshineMacTrackpadSimulationSupported = false;
 
     if (drCallbacks != NULL && (drCallbacks->capabilities & CAPABILITY_PULL_RENDERER) && drCallbacks->submitDecodeUnit) {

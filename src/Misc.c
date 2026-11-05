@@ -160,6 +160,10 @@ bool LiGetHostMacNativeTouchWorkaround(void) {
     return SunshineMacNativeTouchWorkaroundSupported;
 }
 
+bool LiGetHostApplePencilSideButtons(void) {
+    return SunshineApplePencilSideButtonsSupported;
+}
+
 bool LiGetHostMacTrackpadSimulation(void) {
     return SunshineMacTrackpadSimulationSupported;
 }
